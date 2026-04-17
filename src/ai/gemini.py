@@ -29,10 +29,11 @@ def stream_chat(
     client = genai.Client(api_key=api_key)
     contents = _to_gemini_contents(messages)
 
-    for chunk in client.models.generate_content_stream(
-        model=model, contents=contents
-    ):
-        if chunk.text:
-            yield f"data: {json.dumps({'token': chunk.text})}\n\n"
+    try:
+        for chunk in client.models.generate_content_stream(model=model, contents=contents):
+            if chunk.text:
+                yield f"data: {json.dumps({'token': chunk.text})}\n\n"
+    except Exception as e:
+        yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
     yield "data: [DONE]\n\n"

@@ -71,16 +71,29 @@ export default function Chat() {
             if (payload === "[DONE]") break;
 
             try {
-              const { token } = JSON.parse(payload);
-              setMessages((prev) => {
-                const copy = [...prev];
-                const last = copy[copy.length - 1];
-                copy[copy.length - 1] = {
-                  ...last,
-                  content: last.content + token,
-                };
-                return copy;
-              });
+              const parsed = JSON.parse(payload);
+              if (parsed.error) {
+                setMessages((prev) => {
+                  const copy = [...prev];
+                  copy[copy.length - 1] = {
+                    role: "assistant",
+                    content: `Error: ${parsed.error}`,
+                  };
+                  return copy;
+                });
+                break;
+              }
+              if (parsed.token) {
+                setMessages((prev) => {
+                  const copy = [...prev];
+                  const last = copy[copy.length - 1];
+                  copy[copy.length - 1] = {
+                    ...last,
+                    content: last.content + parsed.token,
+                  };
+                  return copy;
+                });
+              }
             } catch {
               // skip malformed chunks
             }
@@ -112,7 +125,7 @@ export default function Chat() {
   return (
     <div className="flex flex-col h-screen max-w-3xl mx-auto">
       <header className="border-b border-gray-800 p-4 text-center">
-        <h1 className="text-xl font-semibold">Hack Nation Chat</h1>
+        <h1 className="text-xl font-semibold">TUM.AI Makeathon</h1>
       </header>
       <MessageList messages={messages} />
       <MessageComposer

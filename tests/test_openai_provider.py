@@ -84,3 +84,15 @@ def test_stream_chat_terminates_with_done(mock_openai_cls):
     result = list(stream_chat([Message(role="user", content="hi")], api_key="key"))
 
     assert result == ["data: [DONE]\n\n"]
+
+
+@patch("src.ai.openai_provider.openai.OpenAI")
+def test_stream_chat_yields_error_event_on_sdk_error(mock_openai_cls):
+    client_mock = MagicMock()
+    client_mock.chat.completions.create.side_effect = Exception("invalid model ID")
+    mock_openai_cls.return_value = client_mock
+
+    result = list(stream_chat([Message(role="user", content="hi")], api_key="key"))
+
+    assert any('"error"' in line for line in result)
+    assert result[-1] == "data: [DONE]\n\n"

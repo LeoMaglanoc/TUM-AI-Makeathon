@@ -14,11 +14,14 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "gemini")
 LLM_MODEL = os.environ.get("LLM_MODEL", "")
 
-app = FastAPI(title="hack-nation-backend")
+_default_origins = "http://localhost:3000,http://127.0.0.1:3000"
+CORS_ORIGINS = [o.strip() for o in os.environ.get("CORS_ORIGINS", _default_origins).split(",")]
+
+app = FastAPI(title="tum-ai-makeathon-backend")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=CORS_ORIGINS,
     allow_methods=["POST", "GET", "OPTIONS"],
     allow_headers=["*"],
 )

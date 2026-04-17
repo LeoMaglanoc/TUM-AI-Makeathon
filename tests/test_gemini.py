@@ -99,13 +99,13 @@ class TestStreamChat:
         assert call_args.kwargs["model"] == "gemini-2.0-flash"
 
     @patch("src.ai.gemini.genai")
-    def test_raises_on_sdk_error(self, mock_genai):
+    def test_yields_error_event_on_sdk_error(self, mock_genai):
         mock_client = MagicMock()
         mock_genai.Client.return_value = mock_client
         mock_client.models.generate_content_stream.side_effect = Exception("API error")
 
         messages = [Message(role="user", content="Hi")]
-        import pytest
+        lines = list(stream_chat(messages, api_key="fake-key"))
 
-        with pytest.raises(Exception, match="API error"):
-            list(stream_chat(messages, api_key="fake-key"))
+        assert any('"error"' in line for line in lines)
+        assert lines[-1] == "data: [DONE]\n\n"

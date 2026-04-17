@@ -21,11 +21,14 @@ def stream_chat(
     client = openai.OpenAI(api_key=api_key)
     openai_messages = _to_openai_messages(messages)
 
-    for chunk in client.chat.completions.create(
-        model=model, messages=openai_messages, stream=True
-    ):
-        content = chunk.choices[0].delta.content
-        if content:
-            yield f"data: {json.dumps({'token': content})}\n\n"
+    try:
+        for chunk in client.chat.completions.create(
+            model=model, messages=openai_messages, stream=True
+        ):
+            content = chunk.choices[0].delta.content
+            if content:
+                yield f"data: {json.dumps({'token': content})}\n\n"
+    except Exception as e:
+        yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
     yield "data: [DONE]\n\n"
