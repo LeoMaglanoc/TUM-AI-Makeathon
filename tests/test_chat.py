@@ -72,7 +72,7 @@ async def test_chat_returns_503_when_no_gemini_key():
             json={"messages": [{"role": "user", "content": "Hi"}]},
         )
     assert resp.status_code == 503
-    assert "GEMINI_API_KEY" in resp.json()["detail"]
+    assert "No API key" in resp.json()["detail"]
 
 
 @pytest.mark.anyio
@@ -86,7 +86,7 @@ async def test_chat_returns_503_when_no_openai_key():
             json={"messages": [{"role": "user", "content": "Hi"}]},
         )
     assert resp.status_code == 503
-    assert "OPENAI_API_KEY" in resp.json()["detail"]
+    assert "No API key" in resp.json()["detail"]
 
 
 @pytest.mark.anyio
@@ -159,3 +159,53 @@ async def test_chat_openai_provider_routes(mock_get_stream_chat):
     assert resp.status_code == 200
     assert "text/event-stream" in resp.headers["content-type"]
     mock_get_stream_chat.assert_called_with("openai")
+
+
+@pytest.mark.anyio
+@patch("src.main.get_stream_chat")
+@patch("src.main.GEMINI_API_KEY", "")
+@patch("src.main.LLM_PROVIDER", "gemini")
+async def test_chat_uses_api_key_from_request_body(mock_get_stream_chat):
+    mock_get_stream_chat.return_value = lambda msgs, **kw: iter(["data: [DONE]\n\n"])
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.post(
+            "/api/chat",
+            json={"messages": [{"role": "user", "content": "Hi"}], "api_key": "from-browser"},
+        )
+    assert resp.status_code == 200
+
+
+@pytest.mark.anyio
+@patch("src.main.get_stream_chat")
+@patch("src.main.GEMINI_API_KEY", "env-gemini-key")
+@patch("src.main.OPENAI_API_KEY", "")
+@patch("src.main.LLM_PROVIDER", "gemini")
+async def test_chat_request_provider_overrides_env(mock_get_stream_chat):
+    mock_get_stream_chat.return_value = lambda msgs, **kw: iter(["data: [DONE]\n\n"])
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        await client.post(
+            "/api/chat",
+            json={
+                "messages": [{"role": "user", "content": "Hi"}],
+                "provider": "openai",
+                "api_key": "from-browser-openai",
+            },
+        )
+    mock_get_stream_chat.assert_called_with("openai")
+
+
+@pytest.mark.anyio
+@patch("src.main.GEMINI_API_KEY", "")
+@patch("src.main.OPENAI_API_KEY", "")
+@patch("src.main.LLM_PROVIDER", "gemini")
+async def test_chat_returns_503_when_no_key_anywhere():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.post(
+            "/api/chat",
+            json={"messages": [{"role": "user", "content": "Hi"}]},
+        )
+    assert resp.status_code == 503
+    assert "No API key" in resp.json()["detail"]

@@ -19,6 +19,9 @@ class Message(BaseModel):
 
 class ChatRequest(BaseModel):
     messages: list[Message]
+    api_key: str | None = None
+    provider: str | None = None
+    model: str | None = None
 
     @field_validator("messages")
     @classmethod

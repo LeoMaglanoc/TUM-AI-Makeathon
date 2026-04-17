@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: tum-ai-makeathon-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: CORS_ORIGINS
+        value: https://leomaglanoc.github.io,http://localhost:3000,http://127.0.0.1:3000

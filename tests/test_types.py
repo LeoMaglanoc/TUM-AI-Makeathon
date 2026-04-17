@@ -48,3 +48,20 @@ class TestChatRequest:
             ]
         )
         assert len(req.messages) == 3
+
+    def test_optional_fields_default_to_none(self):
+        req = ChatRequest(messages=[Message(role="user", content="Hi")])
+        assert req.api_key is None
+        assert req.provider is None
+        assert req.model is None
+
+    def test_optional_fields_accepted(self):
+        req = ChatRequest(
+            messages=[Message(role="user", content="Hi")],
+            api_key="sk-test",
+            provider="openai",
+            model="gpt-4o",
+        )
+        assert req.api_key == "sk-test"
+        assert req.provider == "openai"
+        assert req.model == "gpt-4o"

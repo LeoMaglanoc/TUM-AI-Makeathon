@@ -6,15 +6,16 @@ interface Props {
   onSend: (content: string) => void;
   onStop: () => void;
   isStreaming: boolean;
+  disabled?: boolean;
 }
 
-export default function MessageComposer({ onSend, onStop, isStreaming }: Props) {
+export default function MessageComposer({ onSend, onStop, isStreaming, disabled }: Props) {
   const [input, setInput] = useState("");
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const trimmed = input.trim();
-    if (!trimmed || isStreaming) return;
+    if (!trimmed || isStreaming || disabled) return;
     onSend(trimmed);
     setInput("");
   }
@@ -36,7 +37,7 @@ export default function MessageComposer({ onSend, onStop, isStreaming }: Props) 
           placeholder="Type a message..."
           rows={1}
           className="flex-1 resize-none rounded-lg bg-gray-800 px-4 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          disabled={isStreaming}
+          disabled={isStreaming || disabled}
         />
         {isStreaming ? (
           <button
